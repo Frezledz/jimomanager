@@ -1,4 +1,5 @@
 const fs = require("fs");
+const {randomBytes} = require("crypto");
 const secret = require("dotenv").config().parsed;
 const { Client, GatewayIntentBits,REST,EmbedBuilder,ButtonBuilder, ButtonStyle,Events,ActionRowBuilder,Routes} = require('discord.js');
 const client = new Client({
@@ -18,7 +19,7 @@ client.on("ready", () => {
 client.on("interactionCreate", async (message) => {
   if(message.isChatInputCommand()){
     const cmd = message.commandName;
-    if(message.channelId!="1066044411575799818"||message.member.roles.cache.some(role=>role.name=="Server moderator")){ 
+    if(message.channelId=="1066044411575799818"||message.member.roles.cache.some(role=>role.name=="Server moderator")){ 
       if(cmd=="ping"){
         message.reply(`pong! Time took : ${Date.now() - message.createdTimestamp}ms`);
     };
