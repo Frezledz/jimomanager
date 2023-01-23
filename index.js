@@ -40,7 +40,6 @@ client.on("ready", () => {
 })
 
 client.on("interactionCreate", async (interaction) => {
-  
   if(interaction.isChatInputCommand()){
     const cmd = interaction.commandName;
     if(cmd=="auth"){
@@ -64,23 +63,67 @@ client.on("interactionCreate", async (interaction) => {
       }
   }
 }
+
 if(interaction.customId==="auth"){
   await interaction.deferReply({ ephemeral: true });
+  
+  let dm;
+  try{
+    dm = await interaction.user.send("Scratchのユーザー名を入力してください。");
+  } catch{
+    await interaction.editReply("DMにメッセージを送信できません。");
+    return;
+  }
   await interaction.editReply("DMを確認してください。");
-  const dm = await interaction.user.send("Scratchのユーザー名を入力してください。");
     const filter = m => (/^[\x2d-\x7a]*$/).test(m);
-    const collector = dm.channel.awaitMessages({ filter, max: 1, time: 15000, errors: ['time'] }).then(async collected=>{
+    const collector = dm.channel.awaitMessages({ filter, max: 1, time: 30000, errors: ['time'] }).then(async collected=>{
       const scratchname = collected.first().content;
       const messageone = await dm.channel.send(`${scratchname}さんを検索中です...`);
       request(`/users/${scratchname}/`).then(()=>{
         const id = randomBytes(32).toString("hex");
         const buttontwo = new ActionRowBuilder().addComponents( new ButtonBuilder().setCustomId("authed").setLabel("貼り付けた！").setStyle(ButtonStyle.Primary))
-        messageone.edit({ content: `アカウントが見つかりました。\nあなたのプロフィールの"私が取り組んでいるところ"に、以下の文字列を貼り付けてください。`, embeds: [{
-          description: `\`\`\`\n${uuid}\n\`\`\``
+        messageone.edit({ content: `アカウントが見つかりました。\nあなたのプロフィールの"私が取り組んでいるところ"に、以下の文字列を貼り付けてください。制限時間は60秒、5度試行できます。`, embeds: [{
+          description: `\`\`\`\n${id}\n\`\`\``
         }], components: [buttontwo] });
         /**/
         {
-          const collector = message.createMessageComponentCollector({ componentType: ComponentType.Button, time: 30000,m });
+          const filt = (interaction) => interaction.customId === 'authed';
+          let count=5;
+          const collector = messageone.createMessageComponentCollector({filt,time:30000});
+          collector.on("collect",()=>{
+            request(`/users/${scratchname}/?timestamp=${new Date().getTime()}`).then((res)=>{
+              if(res.profile.status.includes(id)){
+                dm.channel.send(`認証が完了しました。${scratchname}さん、ようこそ！`);
+                collector.stop();
+                const rawdata = fs.readFileSync("db.json");
+                const parsed = JSON.parse(rawdata);
+                const userid = interaction.user.id.toString();
+                parsed[userid]={"scratch":scratchname,"rank":"unknown"};
+                fs.writeFileSync("db.json",JSON.stringify(parsed));
+                return;
+                
+              }else{
+                count--;
+                if(count<=1){
+                  dm.channel.send(`試行可能回数を超えました。後でやり直してください。`);
+                  collector.stop();
+                  return;
+                }
+                dm.channel.send(`文字列の確認ができませんでした。あと${count}回試行できます。`)
+
+              }
+            }).catch(()=>{
+              dm.channel.send("エラーが発生しました。");
+              count--;
+              if(count<=1){
+                dm.channel.send(`試行可能回数を超えました。後でやり直してください。`);
+                collector.stop();
+                return;
+              }
+            })
+          });
+          collector.on(
+            "end",()=>{dm.channel.send(`認証を終了します。`);});
         }
 
       }
