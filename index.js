@@ -76,13 +76,26 @@ if(interaction.customId==="auth"){
         const id = randomBytes(32).toString("hex");
         const buttontwo = new ActionRowBuilder().addComponents( new ButtonBuilder().setCustomId("authed").setLabel("貼り付けた！").setStyle(ButtonStyle.Primary))
         messageone.edit({ content: `アカウントが見つかりました。\nあなたのプロフィールの"私が取り組んでいるところ"に、以下の文字列を貼り付けてください。`, embeds: [{
-          description: `\`\`\`\n${id}\n\`\`\``
-        }], components: [buttontwo] })
-      }).catch(res=>{
-        console.log(res);
-        messageone.edit("Scratchアカウントが見つかりませんでした。");return 0;})
+          description: `\`\`\`\n${uuid}\n\`\`\``
+        }], components: [buttontwo] });
+        /**/
+        {
+          const collector = message.createMessageComponentCollector({ componentType: ComponentType.Button, time: 30000,m });
+        }
 
-    }).catch(()=>{dm.channel.send("タイムアウトしました。また後で試してください。");return 0;});
+      }
+      ).catch(res=>{
+        if(res=="error"){
+          messageone.edit("ボットにエラーが発生しました。");return 0;
+        }else if(res==404){
+          messageone.edit("Scratchアカウントが見つかりませんでした。");return 0;
+        }else{
+          messageone.edit(`${res}エラーが発生しました。`);return 0;
+
+        }
+      })
+
+    }).catch(()=>{dm.channel.send("タイムアウトしました。");return 0;});
 
 }
 });

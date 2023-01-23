@@ -1,7 +1,7 @@
 const http = require("http");
 const request = (link)=>{
     return new Promise((resolve,reject)=>{
-        http.get(`http://explodingstar.pythonanywhere.com/scratch/api/?endpoint=${link}`,res=>{
+        const req = http.get(`http://explodingstar.pythonanywhere.com/scratch/api/?endpoint=${link}`,res=>{
             let chunks = [];
             res.on("data",a=>{
                 chunks.push(a);
@@ -21,6 +21,7 @@ const request = (link)=>{
                 }
             })
         })
+        req.on("error",()=>reject("error"));
     })
 }
 module.exports={request};
