@@ -1,5 +1,6 @@
 const http = require("http");
-const request = (link)=>{
+const https = require("https");
+const httprequest = (link)=>{
     return new Promise((resolve,reject)=>{
         const req = http.get(`http://explodingstar.pythonanywhere.com/scratch/api/?endpoint=${link}`,res=>{
             let chunks = [];
@@ -24,4 +25,4 @@ const request = (link)=>{
         req.on("error",()=>reject("error"));
     })
 }
-module.exports={request};
+module.exports={httprequest};

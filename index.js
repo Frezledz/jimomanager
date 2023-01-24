@@ -1,7 +1,8 @@
 const fs = require("fs");
 const {randomBytes} = require("crypto");
+const { default: axios } = require("axios");
 const secret = require("dotenv").config().parsed;
-const {request} = require("./https.js");
+const {httprequest} = require("./https.js");
 const { Client, GatewayIntentBits,REST,EmbedBuilder,ButtonBuilder, ButtonStyle,Events,ActionRowBuilder,Routes,Partials} = require('discord.js');
 const client = new Client({
   partials: [
@@ -79,7 +80,7 @@ if(interaction.customId==="auth"){
     const collector = dm.channel.awaitMessages({ filter, max: 1, time: 30000, errors: ['time'] }).then(async collected=>{
       const scratchname = collected.first().content;
       const messageone = await dm.channel.send(`${scratchname}さんを検索中です...`);
-      request(`/users/${scratchname}/`).then(()=>{
+      httprequest(`/users/${scratchname}/`).then(()=>{
         const id = randomBytes(32).toString("hex");
         const buttontwo = new ActionRowBuilder().addComponents( new ButtonBuilder().setCustomId("authed").setLabel("貼り付けた！").setStyle(ButtonStyle.Primary))
         messageone.edit({ content: `アカウントが見つかりました。\nあなたのプロフィールの"私が取り組んでいるところ"に、以下の文字列を貼り付けてください。制限時間は60秒、5度試行できます。`, embeds: [{
@@ -91,16 +92,27 @@ if(interaction.customId==="auth"){
           let count=5;
           const collector = messageone.createMessageComponentCollector({filt,time:30000});
           collector.on("collect",()=>{
-            request(`/users/${scratchname}/?timestamp=${new Date().getTime()}`).then((res)=>{
+            httprequest(`/users/${scratchname}/?timestamp=${new Date().getTime()}`).then((res)=>{
               if(res.profile.status.includes(id)){
                 dm.channel.send(`認証が完了しました。${scratchname}さん、ようこそ！`);
                 collector.stop();
                 const rawdata = fs.readFileSync("db.json");
-                const parsed = JSON.parse(rawdata);
+                let parsed = JSON.parse(rawdata);
                 const userid = interaction.user.id.toString();
-                parsed[userid]={"scratch":scratchname,"rank":"unknown"};
-                fs.writeFileSync("db.json",JSON.stringify(parsed));
-                return;
+                let rank;
+                axios({url: `https://jimoapi.glitch.me/api/user/xX_Freezer_Xx`,method:"get"}).then(res=>{
+                  parsed[userid]={"scratch":scratchname,"rank":res.data};
+                }).catch(()=>{
+                  parsed[userid]={"scratch":scratchname,"rank":"visitor"};
+
+                });
+                const jsoned = JSON.stringify(parsed);
+                console.log(parsed);
+                fs.writeFile("dbs.json",jsoned,(err)=>{
+                  if(err){
+                    console.log(err);
+                  }else{console.log("done")};
+                });
                 
               }else{
                 count--;
@@ -146,6 +158,8 @@ if(interaction.customId==="auth"){
 
 
 const {SlashCommandBuilder} = require("@discordjs/builders");
+const { parse } = require("path");
+const { json } = require("stream/consumers");
 const main = ()=>{//Register slash commands and run
   const commands = [
       (new SlashCommandBuilder().setName("ping").setDescription("Return With pong.")).toJSON(),
