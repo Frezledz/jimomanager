@@ -55,14 +55,33 @@ client.on("interactionCreate", async (interaction) => {
           interaction.reply("<#1066042904772100176> 内でのみ認証を行うことができます。");
         }
   
-      }else{
-        if(interaction.channelId=="1066044411575799818"){ 
-          if(cmd=="ping"){
-            interaction.reply(`pong! Time took : ${Date.now() - interaction.createdTimestamp}ms`);
+      }else if(interaction.channelId=="1066044411575799818"){ 
+        if(cmd=="ping"){
+          interaction.reply(`pong! Time took : ${Date.now() - interaction.createdTimestamp}ms`);
         };
+        if(cmd=="userinfo"){
+          interaction.deferReply().then(()=>{
+            const user = interaction.options.get("user").user;
+            const rawdata = JSON.parse(fs.readFileSync("db.json"));
+            if(user.id in rawdata){
+              const data = rawdata[user.id];
+              const embed = new EmbedBuilder().setTitle(`${user.username}'s datas`).addFields(
+                { name: 'Scratch username', value: data.scratch },
+                { name: 'rank', value: data.rank },
+              )
+              interaction.channel.send({ embeds: [embed]});
+              interaction.editReply("Ready!");
+              
+            }else{
+              interaction.editReply("このユーザーは認証を行っていません。");
+            }
+          })
+
+        }
+        if(cmd=="getdiscorduser"){
+        }
 
       }
-  }
 }
 
 if(interaction.customId==="auth"){
@@ -91,51 +110,54 @@ if(interaction.customId==="auth"){
           const filt = (interaction) => interaction.customId === 'authed';
           let count=5;
           const collector = messageone.createMessageComponentCollector({filt,time:30000});
-          collector.on("collect",()=>{
+          collector.on("collect",async o=>{
+            await o.deferReply();
             httprequest(`/users/${scratchname}/?timestamp=${new Date().getTime()}`).then((res)=>{
               if(res.profile.status.includes(id)){
-                dm.channel.send(`認証が完了しました。${scratchname}さん、ようこそ！`);
+                o.editReply(`認証が完了しました。${scratchname}さん、ようこそ！`);
                 collector.stop();
                 const rawdata = fs.readFileSync("db.json");
                 let parsed = JSON.parse(rawdata);
                 const userid = interaction.user.id.toString();
                 let rank;
                 axios({url: `https://jimoapi.glitch.me/api/user/xX_Freezer_Xx`,method:"get"}).then(res=>{
-                  parsed[userid]={"scratch":scratchname,"rank":res.data};
+                  rank=res.data;
+                  return;
                 }).catch(()=>{
-                  parsed[userid]={"scratch":scratchname,"rank":"visitor"};
-
+                  rank="Visitor";
+                  return;
+                }).then(()=>{
+                  parsed[userid]={"scratch":scratchname,"rank":rank,"name":interaction.user.tag,"public":true};
+                  const tmp = interaction.member.roles;
+                  tmp.add(getrole(interaction,rank));
+                  tmp.add(getrole(interaction,"Authorized"));
+                  const jsoned = JSON.stringify(parsed);
+                  fs.writeFile("db.json",jsoned,(err)=>{});
                 });
-                const jsoned = JSON.stringify(parsed);
-                console.log(parsed);
-                fs.writeFile("dbs.json",jsoned,(err)=>{
-                  if(err){
-                    console.log(err);
-                  }else{console.log("done")};
-                });
-                
               }else{
                 count--;
                 if(count<=1){
-                  dm.channel.send(`試行可能回数を超えました。後でやり直してください。`);
+                  o.editReply(`試行可能回数を超えました。後でやり直してください。`);
                   collector.stop();
                   return;
                 }
-                dm.channel.send(`文字列の確認ができませんでした。あと${count}回試行できます。`)
+                o.editReply(`文字列の確認ができませんでした。あと${count}回試行できます。`)
 
               }
             }).catch(()=>{
-              dm.channel.send("エラーが発生しました。");
+              o.editReply("エラーが発生しました。");
               count--;
               if(count<=1){
-                dm.channel.send(`試行可能回数を超えました。後でやり直してください。`);
+                o.editReply(`試行可能回数を超えました。後でやり直してください。`);
                 collector.stop();
                 return;
               }
             })
           });
           collector.on(
+            
             "end",()=>{dm.channel.send(`認証を終了します。`);});
+            
         }
 
       }
@@ -153,9 +175,12 @@ if(interaction.customId==="auth"){
     }).catch(()=>{dm.channel.send("タイムアウトしました。");return 0;});
 
 }
+
 });
 
-
+const getrole = (interaction,name)=>{
+  return interaction.guild.roles.cache.find(role => role.name === name);
+}
 
 const {SlashCommandBuilder} = require("@discordjs/builders");
 const { parse } = require("path");
@@ -168,9 +193,9 @@ const main = ()=>{//Register slash commands and run
       .addUserOption(option =>
         option.setName('user')
           .setDescription('ユーザーを指定してください。')
-          .setRequired(false)
+          .setRequired(true)
           )).toJSON(),
-      (new SlashCommandBuilder().setName("searchdiscordaccount").setDescription("スクラッチのユーザー名からDiscordアカウントを検索します。")
+      (new SlashCommandBuilder().setName("getdiscorduser").setDescription("スクラッチのユーザー名からDiscordアカウントを検索します。")
       .addStringOption(option =>
         option.setName('user')
           .setDescription('スクラッチのユーザー名を指定してください。')
