@@ -211,3 +211,8 @@ main();
 /*
 Master,Advanced,Good,visitor
 */
+const http = require("http");
+http.createServer(function(req, res) {
+  res.write("online");
+  res.end();
+}).listen(8080);
