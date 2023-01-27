@@ -120,7 +120,7 @@ if(interaction.customId==="auth"){
                 let parsed = JSON.parse(rawdata);
                 const userid = interaction.user.id.toString();
                 let rank;
-                axios({url: `https://jimoapi.glitch.me/api/user/xX_Freezer_Xx`,method:"get"}).then(res=>{
+                axios({url: `https://jimoapi.glitch.me/api/user/${scratchname}`,method:"get"}).then(res=>{
                   rank=res.data;
                   return;
                 }).catch(()=>{
