@@ -102,7 +102,7 @@ if(interaction.customId==="auth"){
       httprequest(`/users/${scratchname}/`).then(()=>{
         const id = randomBytes(32).toString("hex");
         const buttontwo = new ActionRowBuilder().addComponents( new ButtonBuilder().setCustomId("authed").setLabel("貼り付けた！").setStyle(ButtonStyle.Primary))
-        messageone.edit({ content: `アカウントが見つかりました。\nあなたのプロフィールの"私が取り組んでいるところ"に、以下の文字列を貼り付けてください。制限時間は60秒、5度試行できます。`, embeds: [{
+        messageone.edit({ content: `アカウントが見つかりました。\nあなたのプロフィールの"私が取り組んでいること"に、以下の文字列を貼り付けてください。制限時間は60秒、5度試行できます。`, embeds: [{
           description: `\`\`\`\n${id}\n\`\`\``
         }], components: [buttontwo] });
         /**/
