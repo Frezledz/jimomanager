@@ -61,6 +61,7 @@ client.on("interactionCreate", async (interaction) => {
         };
         if(cmd=="userinfo"){
           interaction.deferReply().then(()=>{
+            
             const user = interaction.options.get("user").user;
             const rawdata = JSON.parse(fs.readFileSync("db.json"));
             if(user.id in rawdata){
@@ -79,6 +80,32 @@ client.on("interactionCreate", async (interaction) => {
 
         }
         if(cmd=="getdiscorduser"){
+          const user = interaction.options.get("user").value;
+          if((/^[\x2d-\x7a]*$/).test(user)){
+            interaction.deferReply().then(()=>{
+              const data = JSON.parse(fs.readFileSync("db.json"));
+              const keys = Object.keys(data);
+              let disocrdid="未登録";
+              for(let i=0;i<keys.length;i++){
+                  if(data[keys[i]].scratch==user){
+                      if(data[keys[i]].public){
+                        disocrdid= data[keys[i]].name;
+                      }
+                      break;
+                  }
+              }
+              
+              const embed = new EmbedBuilder().setTitle(`${user}'s discord id`).addFields(
+                { name: 'id', value: disocrdid }
+              );
+              interaction.channel.send({ embeds: [embed]});
+              interaction.editReply("Ready!");
+              
+  
+            })
+          }else{
+            interaction.reply("正しい形式で入力してください。");
+          }
         }
 
       }
@@ -112,7 +139,16 @@ if(interaction.customId==="auth"){
           const collector = messageone.createMessageComponentCollector({filt,time:30000});
           collector.on("collect",async o=>{
             await o.deferReply();
-            httprequest(`/users/${scratchname}/?timestamp=${new Date().getTime()}`).then((res)=>{
+            //
+            axios({url: `https://api.scratch.mit.edu/users/${scratchname}/?timestamp=${new Date().getTime()}`,method:"get"}).then(res=>res.data).catch(()=>{
+              o.editReply("エラーが発生しました。");
+              count--;
+              if(count<=1){
+                o.editReply(`試行可能回数を超えました。後でやり直してください。`);
+                collector.stop();
+                return;
+              }
+            }).then((res)=>{
               if(res.profile.status.includes(id)){
                 o.editReply(`認証が完了しました。${scratchname}さん、ようこそ！`);
                 collector.stop();
@@ -121,7 +157,7 @@ if(interaction.customId==="auth"){
                 const userid = interaction.user.id.toString();
                 let rank;
                 getrank(scratchname).then(res=>{
-                  rank=res.data;
+                  rank=res;
                   return;
                 }).catch(()=>{
                   rank="Visitor";
@@ -132,7 +168,9 @@ if(interaction.customId==="auth"){
                   tmp.add(getrole(interaction,rank));
                   tmp.add(getrole(interaction,"Authorized"));
                   const jsoned = JSON.stringify(parsed);
-                  fs.writeFile("db.json",jsoned,(err)=>{});
+                  if(jsoned!=""){
+                    fs.writeFile("db.json",jsoned,(err)=>{});
+                  }
                 });
               }else{
                 count--;
@@ -143,14 +181,6 @@ if(interaction.customId==="auth"){
                 }
                 o.editReply(`文字列の確認ができませんでした。あと${count}回試行できます。`)
 
-              }
-            }).catch(()=>{
-              o.editReply("エラーが発生しました。");
-              count--;
-              if(count<=1){
-                o.editReply(`試行可能回数を超えました。後でやり直してください。`);
-                collector.stop();
-                return;
               }
             })
           });
@@ -183,8 +213,6 @@ const getrole = (interaction,name)=>{
 }
 
 const {SlashCommandBuilder} = require("@discordjs/builders");
-const { parse } = require("path");
-const { json } = require("stream/consumers");
 const main = ()=>{//Register slash commands and run
   const commands = [
       (new SlashCommandBuilder().setName("ping").setDescription("Return With pong.")).toJSON(),
@@ -227,7 +255,7 @@ const getrank = (username)=>{
           while(true){
               
               if(i>raw.length-1){
-                  resolve("visitor");
+                  resolve("Visitor");
                   break;
               }
               const tmp =raw[i].toLowerCase();
