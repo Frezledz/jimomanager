@@ -237,7 +237,7 @@ const main = ()=>{//Register slash commands and run
 };
 main();
 /*
-Master,Advanced,Good,visitor
+Master,Advanced,Good,Visitor
 */
 const http = require("http");
 http.createServer(function(req, res) {
