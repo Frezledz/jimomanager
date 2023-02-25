@@ -3,6 +3,8 @@ const {randomBytes} = require("crypto");
 const { default: axios } = require("axios");
 const secret = require("dotenv").config().parsed;
 const {httprequest} = require("./https.js");
+const cron = require('node-cron');
+
 const { Client, GatewayIntentBits,REST,EmbedBuilder,ButtonBuilder, ButtonStyle,Events,ActionRowBuilder,Routes,Partials} = require('discord.js');
 const client = new Client({
   partials: [
@@ -13,6 +15,7 @@ const client = new Client({
     Partials.GuildScheduledEvent, // for guild events
     Partials.User, // for discord user
     Partials.ThreadMember, // for thread member
+    
   ],
   intents: [
     GatewayIntentBits.Guilds, // for guild related things
@@ -38,6 +41,13 @@ const rest = new REST({ version: "10" }).setToken(secret.BOT_TOKEN);
 
 client.on("ready", () => {
   console.log(`${client.user.username}`);
+  const date = new Date();
+  const logchannel = client.channels.cache.find(channel => channel.id ==="1078441016538972190");
+  logchannel.send(`Rebooted. time:${date.getUTCHours()}:${date.getUTCMinutes()}:${date.getUTCSeconds()} (UTC)`);
+  cron.schedule('0 0 0 * * *', () => {
+    logchannel.send({ files: ['./db.json'] });
+  });
+
 })
 
 client.on("interactionCreate", async (interaction) => {
