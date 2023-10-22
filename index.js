@@ -62,7 +62,7 @@ client.on("interactionCreate", async (interaction) => {
           await interaction.reply("o");
           await interaction.deleteReply();
         }else {
-          interaction.reply("<#1066042904772100176> 内でのみ認証を行うことができます。");
+          interaction.reply("<#1066042904772100176> 内                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       でのみ認証を行うことができます。");
         }
   
       }else if(interaction.channelId=="1066044411575799818"){ 
@@ -116,6 +116,36 @@ client.on("interactionCreate", async (interaction) => {
           }else{
             interaction.reply("正しい形式で入力してください。");
           }
+        }
+        if(cmd=="update"){
+          interaction.deferReply().then(()=>{
+            
+            const rawdata = JSON.parse(fs.readFileSync("db.json"));
+            const uid = interaction.user.id.toString();
+            if(uid in rawdata){
+              const name = rawdata[uid].scratch;
+              const roles = interaction.member.roles;
+              getrank(name).then(res=>{
+                roles.remove(getrole(interaction,"Master"));
+                roles.remove(getrole(interaction,"Advanced"));
+                roles.remove(getrole(interaction,"Visitor"));
+                roles.remove(getrole(interaction,"Good"));
+                setInterval(() => {
+                  roles.add(getrole(interaction,res));
+                  
+                }, 1000);
+                rawdata[uid].rank = res;
+                rawdata[uid].name = interaction.user.tag;
+                const jsoned = JSON.stringify(rawdata);
+                  fs.writeFile("db.json",jsoned,(err)=>{});
+                interaction.editReply(`ランクを${res}に、ユーザー名を${interaction.user.tag}に変更しました。`);
+              })
+              
+            }else{
+              interaction.editReply("このユーザーは認証を行っていません。");
+            }
+          })
+
         }
 
       }
@@ -239,6 +269,7 @@ const main = ()=>{//Register slash commands and run
           .setDescription('スクラッチのユーザー名を指定してください。')
           .setRequired(true)
           )).toJSON(),
+          (new SlashCommandBuilder().setName("update").setDescription("JIMOで昇格、ユーザー名の変更などしたら実行しましょう")).toJSON(),
   ];
   rest.put(Routes.applicationGuildCommands(secret.CLIENT_ID,secret.GUILD_ID),{body:commands}).then(()=>
   client.login(secret.BOT_TOKEN)
@@ -257,8 +288,8 @@ http.createServer(function(req, res) {
 
 const getrank = (username)=>{
   return new Promise((resolve,reject)=>{
-      axios({url: `https://api.scratch.mit.edu/studios/29958336`,method:"get"}).then(res=>res.data).catch(res=>reject(res)).then(res=>{
-          const raw = res.description.split("\n");
+      axios({url: `https://api.scratch.mit.edu/projects/832169787/`,method:"get"}).then(res=>res.data).catch(res=>reject(res)).then(res=>{
+          const raw = res.instructions.split("\n");
           let i=0;
           let ii=0;
           let needstr =[[ "• – • Master intro makers • – •","• – • Advanced intro makers • – •","• – • Good intro makers • – •"],[null,"Master","Advanced","Good"]];
