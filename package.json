@@ -19,11 +19,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/xxXFreezerXxx/jimomanager.git"
+    "url": "git+https://github.com/frezledz/jimomanager.git"
   },
   "bugs": {
-    "url": "https://github.com/xxXFreezerXxx/jimomanager/issues"
+    "url": "https://github.com/frezledz/jimomanager/issues"
   },
-  "homepage": "https://github.com/xxXFreezerXxx/jimomanager#readme",
+  "homepage": "https://github.com/frezledz/jimomanager#readme",
   "description": ""
 }
