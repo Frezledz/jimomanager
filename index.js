@@ -42,11 +42,35 @@ const rest = new REST({ version: "10" }).setToken(secret.BOT_TOKEN);
 client.on("ready", () => {
   console.log(`${client.user.username}`);
   const date = new Date();
+  //Administration logs
   const logchannel = client.channels.cache.find(channel => channel.id ==="1078441016538972190");
   logchannel.send(`Rebooted. time:${date.getUTCHours()}:${date.getUTCMinutes()}:${date.getUTCSeconds()} (UTC)`);
   cron.schedule('0 0 0 * * *', () => {
     logchannel.send({ files: ['./db.json'] });
   });
+  //Scrath notification
+  const sc_not = client.channels.cache.find(channel => channel.id ==="1233639628305858562");
+  let scdata = JSON.parse(fs.readFileSync("scratch.json"));
+  const sckeys = Object.keys(scdata);
+  sckeys.forEach(async name => {
+    const olddata = scdata[name].raw;
+    console.log(`searching ${name}`)
+    await axios({url: `https://api.scratch.mit.edu/users/${name}/projects`,method:"get"});
+    //Promiseがうまいこといってない
+    .then(res=>res.data).then(res=>{
+      let newdatas=[];//array of newer project id
+      res.forEach(element => {
+        const id = element.id;
+        if(olddata.indexOf(id)==-1){
+          console.log(`new project : ${id}`);
+        }
+        newdatas.push(id);
+      });
+      scdata[name].raw=newdatas;
+  });
+  });
+  console.log(JSON.stringify(scdata));
+    
 
 })
 
