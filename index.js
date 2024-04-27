@@ -70,7 +70,7 @@ client.on("ready", async() => {
 
   logchannel.send(`Rebooted. time:${date.getUTCHours()}:${date.getUTCMinutes()}:${date.getUTCSeconds()} (UTC)`);
   cron.schedule('0 0 0 * * *', () => {
-    logchannel.send({ files: ['./db.json'] });
+    logchannel.send({ files: ['./db.json','./scratch.json'] });
   });
   cron.schedule('*/10 * * * *', () => {
     notification();

@@ -12,9 +12,3 @@ const generate_json = (username)=>{
     })
 
 }
-
-generate_json("xX_Freezer_Xx");
-generate_json("Ashibara_Art");
-generate_json("omowaka");
-generate_json("Crystal-25");
-generate_json("kirbyzaz");
