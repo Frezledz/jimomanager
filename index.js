@@ -39,7 +39,7 @@ const client = new Client({
 const rest = new REST({ version: "10" }).setToken(secret.BOT_TOKEN);
 
 
-client.on("ready", () => {
+client.on("ready", async() => {
   console.log(`${client.user.username}`);
   const date = new Date();
   //Administration logs
@@ -49,28 +49,27 @@ client.on("ready", () => {
     logchannel.send({ files: ['./db.json'] });
   });
   //Scrath notification
+  console.log("fetch started.");
   const sc_not = client.channels.cache.find(channel => channel.id ==="1233639628305858562");
   let scdata = JSON.parse(fs.readFileSync("scratch.json"));
   const sckeys = Object.keys(scdata);
-  sckeys.forEach(async name => {
+  console.log(sckeys);
+  for(let i=0;i<sckeys.length;i++){
+    const name = sckeys[i];
     const olddata = scdata[name].raw;
-    console.log(`searching ${name}`)
-    await axios({url: `https://api.scratch.mit.edu/users/${name}/projects`,method:"get"});
-    //Promiseがうまいこといってない
-    .then(res=>res.data).then(res=>{
-      let newdatas=[];//array of newer project id
-      res.forEach(element => {
-        const id = element.id;
-        if(olddata.indexOf(id)==-1){
-          console.log(`new project : ${id}`);
-        }
-        newdatas.push(id);
-      });
-      scdata[name].raw=newdatas;
-  });
-  });
-  console.log(JSON.stringify(scdata));
-    
+    console.log(`fetching ${name}`);
+    const res = await axios({url: `https://api.scratch.mit.edu/users/${name}/projects`,method:"get"});
+    let newdatas=[];//array of newer project id
+    res.data.forEach(element => {
+      const id = element.id;
+      if(olddata.indexOf(id)==-1){;
+        sc_not.send(`${name} uploaded a new project! \nhttps://scratch.mit.edu/projects/${id}`);
+      }
+      newdatas.push(id);
+    });
+    scdata[name].raw=newdatas;
+  }
+  fs.writeFile("scratch.json",JSON.stringify(scdata),(err)=>{});
 
 })
 
