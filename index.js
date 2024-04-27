@@ -38,39 +38,44 @@ const client = new Client({
 });
 const rest = new REST({ version: "10" }).setToken(secret.BOT_TOKEN);
 
+let notif_users;
+
+const notification = async ()=>{
+  console.log("fetch started.");
+  const sc_not = client.channels.cache.find(channel => channel.id ==="1233355655381778453");
+  let scdata = JSON.parse(fs.readFileSync("scratch.json"));
+  notif_users = Object.keys(scdata);
+  for(let i=0;i<notif_users.length;i++){
+    const name = notif_users[i];
+    const olddata = scdata[name].raw;
+    const res = await axios({url: `https://api.scratch.mit.edu/users/${name}/projects`,method:"get"});
+    let newdatas=[];//array of newer project id
+    res.data.forEach(element => {
+      const id = element.id;
+      if(olddata.indexOf(id)==-1){;
+        sc_not.send(`<@&1233704362379968542>\n# [${name}](https://scratch.mit.edu/users/${name})さんの新作です！ \nhttps://turbowarp.org/${id}`);
+      }
+      newdatas.push(id);
+    });
+    scdata[name].raw=newdatas;
+  }
+  fs.writeFile("scratch.json",JSON.stringify(scdata),(err)=>{});}
+
 
 client.on("ready", async() => {
   console.log(`${client.user.username}`);
   const date = new Date();
   //Administration logs
   const logchannel = client.channels.cache.find(channel => channel.id ==="1078441016538972190");
+
   logchannel.send(`Rebooted. time:${date.getUTCHours()}:${date.getUTCMinutes()}:${date.getUTCSeconds()} (UTC)`);
   cron.schedule('0 0 0 * * *', () => {
     logchannel.send({ files: ['./db.json'] });
   });
+  cron.schedule('*/10 * * * *', () => {
+    notification();
+  });
   //Scrath notification
-  console.log("fetch started.");
-  const sc_not = client.channels.cache.find(channel => channel.id ==="1233639628305858562");
-  let scdata = JSON.parse(fs.readFileSync("scratch.json"));
-  const sckeys = Object.keys(scdata);
-  console.log(sckeys);
-  for(let i=0;i<sckeys.length;i++){
-    const name = sckeys[i];
-    const olddata = scdata[name].raw;
-    console.log(`fetching ${name}`);
-    const res = await axios({url: `https://api.scratch.mit.edu/users/${name}/projects`,method:"get"});
-    let newdatas=[];//array of newer project id
-    res.data.forEach(element => {
-      const id = element.id;
-      if(olddata.indexOf(id)==-1){;
-        sc_not.send(`${name} uploaded a new project! \nhttps://scratch.mit.edu/projects/${id}`);
-      }
-      newdatas.push(id);
-    });
-    scdata[name].raw=newdatas;
-  }
-  fs.writeFile("scratch.json",JSON.stringify(scdata),(err)=>{});
-
 })
 
 client.on("interactionCreate", async (interaction) => {
