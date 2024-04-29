@@ -48,7 +48,7 @@ const notification = async ()=>{
   for(let i=0;i<notif_users.length;i++){
     const name = notif_users[i];
     const olddata = scdata[name].raw;
-    const res = await axios({url: `https://api.scratch.mit.edu/users/${name}/projects`,method:"get"});
+    const res = await axios({url: `https://api.scratch.mit.edu/users/${name}/projects/?timestamp=${new Date().getTime()}`,method:"get"});
     let newdatas=[];//array of newer project id
     res.data.forEach(element => {
       const id = element.id;
