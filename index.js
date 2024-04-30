@@ -41,7 +41,6 @@ const rest = new REST({ version: "10" }).setToken(secret.BOT_TOKEN);
 let notif_users;
 
 const notification = async ()=>{
-  console.log("fetch started.");
   const sc_not = client.channels.cache.find(channel => channel.id ==="1233355655381778453");
   let scdata = JSON.parse(fs.readFileSync("scratch.json"));
   notif_users = Object.keys(scdata);
@@ -52,7 +51,8 @@ const notification = async ()=>{
     let newdatas=[];//array of newer project id
     res.data.forEach(element => {
       const id = element.id;
-      if(olddata.indexOf(id)==-1){;
+      if(olddata.indexOf(id)==-1){
+        console.log(`sending ${name}'s new project ${id}...`);
         sc_not.send(`<@&1233704362379968542>\n# [${name}](https://scratch.mit.edu/users/${name})さんの新作です！ \nhttps://turbowarp.org/${id}`);
       }
       newdatas.push(id);
@@ -90,7 +90,7 @@ client.on("interactionCreate", async (interaction) => {
           await interaction.reply("o");
           await interaction.deleteReply();
         }else {
-          interaction.reply("<#1066042904772100176> 内                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       でのみ認証を行うことができます。");
+          interaction.reply("<#1066042904772100176> 内でのみ認証を行うことができます。");
         }
   
       }else if(interaction.channelId=="1066044411575799818"){ 
@@ -158,8 +158,9 @@ client.on("interactionCreate", async (interaction) => {
                 roles.remove(getrole(interaction,"Advanced"));
                 roles.remove(getrole(interaction,"Visitor"));
                 roles.remove(getrole(interaction,"Good"));
-                setInterval(() => {
+                setTimeout(() => {
                   roles.add(getrole(interaction,res));
+                  console.log(`${interaction.user.displayName} updated role to ${res}`);
                   
                 }, 1000);
                 rawdata[uid].rank = res;
@@ -197,6 +198,7 @@ if(interaction.customId==="auth"){
       httprequest(`/users/${scratchname}/`).then(()=>{
         const id = randomBytes(32).toString("hex");
         const buttontwo = new ActionRowBuilder().addComponents( new ButtonBuilder().setCustomId("authed").setLabel("貼り付けた！").setStyle(ButtonStyle.Primary))
+        console.log(`${scratchname} is authorizing...`);
         messageone.edit({ content: `アカウントが見つかりました。\nあなたのプロフィールの"私が取り組んでいること"に、以下の文字列を貼り付けてください。制限時間は60秒、5度試行できます。`, embeds: [{
           description: `\`\`\`\n${id}\n\`\`\``
         }], components: [buttontwo] });
@@ -220,6 +222,7 @@ if(interaction.customId==="auth"){
               if(res.profile.status.includes(id)){
                 o.editReply(`認証が完了しました。${scratchname}さん、ようこそ！`);
                 collector.stop();
+                console.log(`${scratchname} finished authorizing`);
                 const rawdata = fs.readFileSync("db.json");
                 let parsed = JSON.parse(rawdata);
                 const userid = interaction.user.id.toString();
