@@ -46,18 +46,17 @@ const notification = async ()=>{
   notif_users = Object.keys(scdata);
   for(let i=0;i<notif_users.length;i++){
     const name = notif_users[i];
-    const olddata = scdata[name].raw;
+    let olddata = scdata[name].raw;
     const res = await axios({url: `https://api.scratch.mit.edu/users/${name}/projects/?timestamp=${new Date().getTime()}`,method:"get"});
-    let newdatas=[];//array of newer project id
     res.data.forEach(element => {
       const id = element.id;
       if(olddata.indexOf(id)==-1){
         console.log(`sending ${name}'s new project ${id}...`);
         sc_not.send(`<@&1233704362379968542>\n# [${name}](https://scratch.mit.edu/users/${name})さんの新作です！ \nhttps://turbowarp.org/${id}`);
+        olddata.push(id);
       }
-      newdatas.push(id);
     });
-    scdata[name].raw=newdatas;
+    scdata[name].raw=olddata;
   }
   fs.writeFile("scratch.json",JSON.stringify(scdata),(err)=>{});}
 
@@ -175,6 +174,86 @@ client.on("interactionCreate", async (interaction) => {
             }
           })
 
+        }
+        if(cmd=="notification"){
+          interaction.deferReply().then(async ()=>{
+            //check permission
+            const option = interaction.options.get("option").value;
+            if(option=="list"){
+              //Only list command can be run by anyone!
+
+              const scdata = JSON.parse(fs.readFileSync("scratch.json"));
+              const keys = Object.keys(scdata);
+              const embed = new EmbedBuilder().setTitle("Notification list").setDescription("**notification user count**: "+keys.length)
+              for(let i=0;i<keys.length;i++){
+                embed.addFields({name:`${i}`,value:keys[i]});
+              }
+              interaction.editReply("ready!");
+              interaction.channel.send({embeds:[embed]});
+
+            }
+            else if(interaction.member.roles.cache.has("1065679401188081694")){
+              let name;
+              try {
+                name= interaction.options.get("username").value;
+              } catch (error) {
+                name=null;
+              }
+                //Requires name option to be filled
+                if(name!==null){
+                  let scdata = JSON.parse(fs.readFileSync("scratch.json"));
+                  if(option=="add"){
+                    if(Object.keys(scdata).indexOf(name)===-1){
+                      axios.get(`https://api.scratch.mit.edu/users/${name}`).then(async ()=>{
+                        interaction.editReply("User found! now fetching datas...")
+                        let ids = [];
+                        let offset=0;
+                        while(true){
+                            const res = (await axios.get(`https://api.scratch.mit.edu/users/${name}/projects/?limit=40&offset=${offset}&timestamp=${new Date().getTime()}`)).data;
+                            if(res.length===0){
+                                break;
+                            }
+                            res.forEach(element => {
+                                ids.push(element.id);
+                            });
+                            offset+=40;
+                        }
+                        //generate json
+                        scdata[name]={"raw":ids};
+                        fs.writeFile("scratch.json",JSON.stringify(scdata),(err)=>{});
+                        console.log(`added ${name}`);
+                        interaction.editReply(`${name} was successfully added to the list!`);
+
+                      }).catch(()=>{
+                        interaction.editReply("User not found or something went wrong.");
+
+                      })
+  
+                    }else{
+                      interaction.editReply(`${name} is already added to the list.`);
+                    }
+                    
+                  }
+                  if(option=="remove"){
+                    if(Object.keys(scdata).indexOf(name)!==-1){
+                      delete scdata[name];
+                      fs.writeFile("scratch.json",JSON.stringify(scdata),(err)=>{});
+                      console.log(`deleted ${name}`);
+                      interaction.editReply(`successfully deleted ${name}.`);
+                    }else{
+                      interaction.editReply(`${name} is not on the list.`);
+                    }
+                  }
+
+                }else{
+                  interaction.editReply("Username was not specified! :(");
+                }
+                
+            }else{
+              interaction.editReply("Only server moderator can run this command");
+            }
+
+          })
         }
 
       }
@@ -300,7 +379,27 @@ const main = ()=>{//Register slash commands and run
           .setDescription('スクラッチのユーザー名を指定してください。')
           .setRequired(true)
           )).toJSON(),
-          (new SlashCommandBuilder().setName("update").setDescription("JIMOで昇格、ユーザー名の変更などしたら実行しましょう")).toJSON(),
+      (new SlashCommandBuilder().setName("update").setDescription("JIMOで昇格、ユーザー名の変更などしたら実行しましょう")).toJSON(),
+
+      (new SlashCommandBuilder().setName("notification").setDescription("イントロ通知の管理用")
+      .addStringOption(option =>
+        option.setName('option')
+          .setDescription('option')
+          .setRequired(true)
+          .addChoices(
+            {name:"add",value:"add"},
+            {name:"remove",value:"remove"},
+            {name:"list",value:"list"}
+          )
+      )
+      .addStringOption(option=>
+        option.setName("username")
+        .setDescription("Enter scratch username unless you are running 'list' option")
+        .setRequired(false)
+      )
+      ).toJSON(),
+      
+
   ];
   rest.put(Routes.applicationGuildCommands(secret.CLIENT_ID,secret.GUILD_ID),{body:commands}).then(()=>
   client.login(secret.BOT_TOKEN)
