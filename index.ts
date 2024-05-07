@@ -1,9 +1,9 @@
-const fs = require("fs");
-const {randomBytes} = require("crypto");
-const { default: axios } = require("axios");
+import * as fs from "fs";
+import { randomBytes } from "crypto";
+import { default as axios } from "axios";
 const secret = require("dotenv").config().parsed;
 const {httprequest} = require("./https.js");
-const cron = require('node-cron');
+import cron from 'node-cron';
 
 /*Dictionary機能について
 permission
