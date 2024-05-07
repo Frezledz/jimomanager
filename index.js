@@ -5,6 +5,19 @@ const secret = require("dotenv").config().parsed;
 const {httprequest} = require("./https.js");
 const cron = require('node-cron');
 
+/*Dictionary機能について
+permission
+0 : No one else can edit it (requires above Master role)
+1 : Anyone can edit it
+
+
+"カテゴリ名":{"description":"カテゴリの説明","elements":{
+    "用語":{"description":"説明","media":"画像、動画","reference":"参考プロジェクト","writer":"書いた人","permission":0}
+    }
+}
+*/
+
+
 const { Client, GatewayIntentBits,REST,EmbedBuilder,ButtonBuilder, ButtonStyle,Events,ActionRowBuilder,Routes,Partials} = require('discord.js');
 const client = new Client({
   partials: [
@@ -256,6 +269,31 @@ client.on("interactionCreate", async (interaction) => {
           })
         }
 
+      }else if(cmd=="dictionary_edit"){
+        if(interaction.channelId=="1165606524127805460"){
+          interaction.deferReply().then(()=>{
+
+            //interaction.editReply("hello world!\nhttps://uploads.scratch.mit.edu/get_image/project/499025389_480x360.png");
+            const mode = interaction.options.get("mode").value;
+            const category = interaction.options.get("category").value;
+            const name = interaction.options.get("name").value;
+            const db = JSON.parse(fs.readFileSync("dictionary.json"));
+            let media;
+            let reference;
+            let permission;
+            
+            try {
+              
+            } catch (error) {
+              
+            }
+            if(mode==="add"){
+              
+            }
+          })
+        }else{
+          interaction.reply(`<#1165606524127805460> でのみこのコマンドを実行できます。`);
+        }
       }
 }
 
@@ -398,6 +436,57 @@ const main = ()=>{//Register slash commands and run
         .setRequired(false)
       )
       ).toJSON(),
+      (new SlashCommandBuilder().setName("dictionary_edit").setDescription("イントロ辞典の用語追加、編集")
+      .addStringOption(option=>
+        option.setName("mode")
+        .setRequired(true)
+        .setDescription("mode")
+        .addChoices(
+          {name:"add",value:"add"},
+          {name:"edit",value:"edit"},
+        )
+      )
+      
+      .addStringOption(option=>
+        option.setName("category")
+        .setDescription("どのカテゴリーですか？")
+        .setRequired(true)
+        .addChoices(
+          {name:"style",value:"style"},
+          {name:"design",value:"design"},
+          {name:"effect",value:"effect"},
+          {name:"tech",value:"tech"},
+          {name:"contest",value:"contest"},
+          {name:"jimo",value:"jimo"},
+          {name:"other",value:"other"},
+        )
+      )
+      .addStringOption(option=>
+        option.setName("name")
+        .setDescription("用語名")
+        .setRequired(true)
+      )
+      .addStringOption(option=>
+        option.setName("media")
+        .setDescription("参考動画、写真等(任意)")
+        .setRequired(false)
+      )
+      .addStringOption(option=>
+        option.setName("reference")
+        .setDescription("一例として、プロジェクトへのリンク等")
+        .setRequired(false)
+      )
+      .addStringOption(option=>
+        option.setName("permission")
+        .setDescription("この用語の編集権限(任意)")
+        .setRequired(false)
+        .addChoices(
+          {name:"自分だけ編集できる(Master以上のみ)",value:"0"},
+          {name:"Advanced以上なら編集可能",value:"1"},
+        )
+      )
+    ).toJSON(),
+    
       
 
   ];
