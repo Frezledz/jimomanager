@@ -4,7 +4,6 @@ const { default: axios } = require("axios");
 const secret = require("dotenv").config().parsed;
 const {httprequest} = require("./https.js");
 const cron = require('node-cron');
-
 /*Dictionary機能について
 permission
 0 : No one else can edit it (requires above Master role)
@@ -505,10 +504,11 @@ http.createServer(function(req, res) {
   res.end();
 }).listen(8080);
 
+
 const getrank = (username)=>{
   return new Promise((resolve,reject)=>{
-      axios({url: `https://api.scratch.mit.edu/projects/832169787/`,method:"get"}).then(res=>res.data).catch(res=>reject(res)).then(res=>{
-          const raw = res.instructions.split("\n");
+      axios({url: secret.ASHIBARA_LINK,method:"get"}).then(res=>res.data).catch(res=>reject(res)).then(res=>{
+          const raw = res.split("\n");
           let i=0;
           let ii=0;
           let needstr =[[ "• – • Master intro makers • – •","• – • Advanced intro makers • – •","• – • Good intro makers • – •"],[null,"Master","Advanced","Good"]];
