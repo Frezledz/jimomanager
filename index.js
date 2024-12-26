@@ -113,7 +113,7 @@ client.on("interactionCreate", async (interaction) => {
         interaction.reply("<#1066042904772100176> 内でのみ認証を行うことができます。");
       }
 
-    } else if (interaction.channelId == "1066044411575799818") {
+    } else if (interaction.channelId == "1066044411575799818" || interaction.channelId == "1321814892029935686") {
       if (cmd == "ping") {
         interaction.reply(`pong! Time took : ${Date.now() - interaction.createdTimestamp}ms`);
       };
