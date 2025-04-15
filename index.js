@@ -2,7 +2,6 @@ const fs = require("fs");
 const { randomBytes } = require("crypto");
 const { default: axios } = require("axios");
 const secret = require("dotenv").config().parsed;
-const { httprequest } = require("./https.js");
 const cron = require('node-cron');
 /*Dictionary機能について
 permission
@@ -320,7 +319,8 @@ client.on("interactionCreate", async (interaction) => {
     const collector = dm.channel.awaitMessages({ filter, max: 1, time: 30000, errors: ['time'] }).then(async collected => {
       const scratchname = collected.first().content;
       const messageone = await dm.channel.send(`${scratchname}さんを検索中です...`);
-      httprequest(`/users/${scratchname}/`).then(() => {
+      console.log(`/users/${scratchname}/`)
+      axios({ url: `https://api.scratch.mit.edu/users/${scratchname}/`, method: "get" }).then(() => {
         const id = randomBytes(32).toString("hex");
         const buttontwo = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("authed").setLabel("貼り付けた！").setStyle(ButtonStyle.Primary))
         console.log(`${scratchname} is authorizing...`);
