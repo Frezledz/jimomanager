@@ -200,24 +200,26 @@ client.on("interactionCreate", async (interaction) => {
           //check permission
           const option = interaction.options.get("option").value;
           if (option == "list") {
-              // Only list command can be run by anyone!
-              const scdata = JSON.parse(fs.readFileSync("scratch.json", "utf8"));
-              const keys = Object.keys(scdata);
-              const embed = new EmbedBuilder()
-                  .setTitle("Notification list")
-                  .setDescription("**notification user count**: " + keys.length);
+            // Only list command can be run by anyone!
+            const scdata = JSON.parse(fs.readFileSync("scratch.json", "utf8"));
+            const keys = Object.keys(scdata);
+            const embed = new EmbedBuilder()
+              .setTitle("Notification list")
+              .setDescription("**notification user count**: " + keys.length);
 
-              for (let i = 0; i < keys.length; i++) {
-                  embed.addFields({ name: `${i + 1}`, value: keys[i] });
-              }
-              
-              await interaction.editReply("ready!"); // 非同期処理のためにawaitを追加
-              if (interaction.channel) {
-                  interaction.channel.send({ embeds: [embed] });
-            　} else {
-                  console.error("Channel not found for interaction.");
-            　}
-        　}
+            let field_text = "";
+            for (let i = 0; i < keys.length; i++) {
+              field_text += `${i}: ` + keys[i] + "\n";
+            }
+            embed.addFields({ name: `list`, value: field_text });
+
+            await interaction.editReply("ready!"); // 非同期処理のためにawaitを追加
+            if (interaction.channel) {
+              interaction.channel.send({ embeds: [embed] });
+            } else {
+              console.error("Channel not found for interaction.");
+            }
+          }
 
           else if (interaction.member.roles.cache.has("1065679401188081694")) {
             let name;
